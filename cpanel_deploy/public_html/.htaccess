@@ -1,0 +1,100 @@
+# ==============================================================================
+# Next Gen Relocation — cPanel Production Master .htaccess
+# Handles:
+# 1. Main Website at / (and subpages) -> public_html/index.html
+# 2. CRM Panel at /crm/ -> public_html/crm/index.html
+# 3. Laravel Backend -> public_html/index.php
+#    (/api, /sanctum, /admin, /book-survey, /quotation, /payment, /job, /call, etc.)
+# 4. Uploaded public assets -> public_html/storage/
+# ==============================================================================
+
+<IfModule mod_negotiation.c>
+    Options -MultiViews -Indexes
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Pass Authorization Header for PHP-FPM / FastCGI / Sanctum
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    RewriteCond %{HTTP:x-xsrf-token} .
+    RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
+
+    # Force HTTPS (optional: uncomment if SSL is active on your domain)
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Normalize /crm to /crm/ (Redirect trailing slash for directory)
+    RewriteRule ^crm$ /crm/ [R=301,L]
+
+    # Normalize /admin to /admin/dashboard
+    RewriteRule ^admin/?$ /index.php [L]
+
+    # Normalize /app/* shortcuts to /crm/app/*
+    RewriteRule ^app/(.*)$ /crm/app/$1 [R=301,L]
+
+    # --------------------------------------------------------------------------
+    # CRM Panel Static Assets & SPA Router (/crm/...)
+    # --------------------------------------------------------------------------
+    # If file exists inside /crm (e.g. /crm/assets/style.css, /crm/zego-call.html), serve it
+    RewriteCond %{REQUEST_URI} ^/crm/
+    RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -d
+    RewriteRule ^ - [L]
+
+    # SPA routing for CRM panel (fallback to /crm/index.html)
+    RewriteCond %{REQUEST_URI} ^/crm/
+    RewriteRule ^crm/(.*)$ /crm/index.html [L]
+
+    # --------------------------------------------------------------------------
+    # Laravel Backend Dynamic Routes (/api, /sanctum, /admin, etc.)
+    # --------------------------------------------------------------------------
+    RewriteCond %{REQUEST_URI} ^/(api|sanctum|admin|book-survey|quotation|payment|job|call|survey|chat|surveyor|invoice|customer|webhooks)(/.*)?$ [NC]
+    RewriteRule ^ index.php [L]
+
+    # --------------------------------------------------------------------------
+    # Laravel Public Storage Link (/storage/...)
+    # --------------------------------------------------------------------------
+    RewriteCond %{REQUEST_URI} ^/storage/
+    RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -f
+    RewriteRule ^ - [L]
+
+    RewriteCond %{REQUEST_URI} ^/storage/
+    RewriteRule ^ index.php [L]
+
+    # --------------------------------------------------------------------------
+    # Main Website Static Files & SPA Fallback (/)
+    # --------------------------------------------------------------------------
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Send all other requests to Website index.html
+    RewriteRule ^ index.html [L]
+</IfModule>
+
+# Performance: Gzip / Deflate Compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# Security Headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>

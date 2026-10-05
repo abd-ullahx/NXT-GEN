@@ -1,0 +1,113 @@
+-- Create Database if not exists
+CREATE DATABASE IF NOT EXISTS `nextgen_crm` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `nextgen_crm`;
+
+-- 1. Leads Table
+CREATE TABLE IF NOT EXISTS `leads` (
+  `id` VARCHAR(50) PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) NOT NULL,
+  `phone` VARCHAR(100) NOT NULL,
+  `source` VARCHAR(100) NOT NULL,
+  `status` VARCHAR(50) NOT NULL DEFAULT 'new',
+  `move_type` VARCHAR(255) NOT NULL,
+  `from_location` VARCHAR(255) NOT NULL,
+  `to_location` VARCHAR(255) NOT NULL,
+  `move_date` DATE NOT NULL,
+  `est_value` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `ai_score` INT NOT NULL DEFAULT 5,
+  `priority` VARCHAR(50) NOT NULL DEFAULT 'Warm',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 2. Contacts Table
+CREATE TABLE IF NOT EXISTS `contacts` (
+  `id` VARCHAR(50) PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) NOT NULL,
+  `phone` VARCHAR(100) NOT NULL,
+  `type` VARCHAR(50) NOT NULL DEFAULT 'Customer',
+  `moves` INT NOT NULL DEFAULT 0,
+  `lifetime_value` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `status` VARCHAR(50) NOT NULL DEFAULT 'Active',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 3. Job Events (Calendar) Table
+CREATE TABLE IF NOT EXISTS `job_events` (
+  `id` VARCHAR(50) PRIMARY KEY,
+  `title` VARCHAR(255) NOT NULL,
+  `type` VARCHAR(50) NOT NULL DEFAULT 'Job',
+  `event_date` DATE NOT NULL,
+  `event_time` VARCHAR(50) NOT NULL,
+  `driver` VARCHAR(255) NOT NULL,
+  `vehicle` VARCHAR(255) NOT NULL,
+  `location` VARCHAR(255) NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 4. Transactions Table
+CREATE TABLE IF NOT EXISTS `transactions` (
+  `id` VARCHAR(50) PRIMARY KEY,
+  `transaction_date` DATE NOT NULL,
+  `label` VARCHAR(255) NOT NULL,
+  `category` VARCHAR(100) NOT NULL,
+  `type` VARCHAR(50) NOT NULL DEFAULT 'income',
+  `amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 5. Integrations Table
+CREATE TABLE IF NOT EXISTS `integrations` (
+  `id` VARCHAR(50) PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `desc_text` TEXT NOT NULL,
+  `category` VARCHAR(100) NOT NULL,
+  `connected` TINYINT(1) NOT NULL DEFAULT 0,
+  `color` VARCHAR(50) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 6. Settings Table
+CREATE TABLE IF NOT EXISTS `settings` (
+  `id` INT PRIMARY KEY AUTO_INCREMENT,
+  `business_name` VARCHAR(255) NOT NULL DEFAULT 'NEXT GEN RELOCATION LTD',
+  `trading_region` VARCHAR(255) NOT NULL DEFAULT 'Slough & Home Counties',
+  `contact_email` VARCHAR(255) NOT NULL DEFAULT 'hello@nextgenrelocation.co.uk',
+  `phone` VARCHAR(100) NOT NULL DEFAULT '+44 1753 555 200'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 7. Outlook OAuth Tokens Table
+CREATE TABLE IF NOT EXISTS `outlook_tokens` (
+  `id` INT PRIMARY KEY AUTO_INCREMENT,
+  `user_email` VARCHAR(255) NOT NULL,
+  `display_name` VARCHAR(255) DEFAULT NULL,
+  `access_token` TEXT NOT NULL,
+  `refresh_token` TEXT NOT NULL,
+  `expires_at` TIMESTAMP NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY `uk_user_email` (`user_email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 8. Synced Emails Table
+CREATE TABLE IF NOT EXISTS `emails` (
+  `id` INT PRIMARY KEY AUTO_INCREMENT,
+  `message_id` VARCHAR(255) NOT NULL,
+  `conversation_id` VARCHAR(255) DEFAULT NULL,
+  `direction` ENUM('inbound','outbound') NOT NULL DEFAULT 'inbound',
+  `from_email` VARCHAR(255) NOT NULL,
+  `from_name` VARCHAR(255) DEFAULT NULL,
+  `to_email` VARCHAR(255) NOT NULL,
+  `subject` VARCHAR(500) DEFAULT NULL,
+  `body_preview` TEXT DEFAULT NULL,
+  `body_html` MEDIUMTEXT DEFAULT NULL,
+  `is_read` TINYINT(1) NOT NULL DEFAULT 0,
+  `received_at` TIMESTAMP NOT NULL,
+  `lead_id` VARCHAR(50) DEFAULT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY `uk_message_id` (`message_id`),
+  KEY `idx_direction` (`direction`),
+  KEY `idx_from_email` (`from_email`),
+  KEY `idx_received_at` (`received_at`),
+  KEY `idx_lead_id` (`lead_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

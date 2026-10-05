@@ -1,0 +1,18 @@
+services:
+  whisper:
+    build: .
+    container_name: crm-whisper-service
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    environment:
+      - WHISPER_MODEL=small
+      - WHISPER_COMPUTE_TYPE=int8
+      - WHISPER_DEVICE=cpu
+      - WHISPER_API_TOKEN=whisper-secret-token-crm-2026
+      - PORT=9000
+    volumes:
+      - whisper-models:/root/.cache/huggingface
+
+volumes:
+  whisper-models:
