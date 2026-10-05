@@ -9,7 +9,7 @@
     "dev:crm": "npm --prefix crm-panel run dev",
     "dev:backend": "cd backend && php artisan serve",
     "start-all": "node gateway.js",
-    "build:cpanel": "node scripts/prepare_cpanel_deploy.js",
+    "build:cpanel": "npm --prefix crm-panel run build && node scripts/prepare_cpanel_deploy.js",
     "tunnel": "ngrok http 127.0.0.1:3000 --url shield-careless-impulse.ngrok-free.dev",
     "start:tunnel": "cmd /c start-ngrok.bat"
   },

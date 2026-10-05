@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { spawn } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,7 +13,10 @@ const crmDir = path.join(publicHtmlDir, 'crm');
 
 console.log('🚀 Preparing cPanel deployment package...');
 
-// Ensure directories exist
+// Clean and ensure directories exist
+if (fs.existsSync(crmDir)) {
+  fs.rmSync(crmDir, { recursive: true, force: true });
+}
 fs.mkdirSync(crmDir, { recursive: true });
 
 // 1. Copy website dist files to public_html
@@ -31,6 +35,36 @@ if (fs.existsSync(crmPublic)) {
   copyFolderSync(crmPublic, crmDir);
 } else {
   console.warn('⚠️ CRM build not found in crm-panel/.output/public.');
+}
+
+// 2b. Generate /crm/index.html via SSR pre-rendering
+const serverEntry = path.join(rootDir, 'crm-panel', '.output', 'server', 'index.mjs');
+if (fs.existsSync(serverEntry)) {
+  console.log('⚡ Pre-rendering /crm/index.html using SSR server...');
+  const port = 3889;
+  const child = spawn(process.execPath, [serverEntry], {
+    env: { ...process.env, PORT: String(port) },
+    stdio: 'ignore',
+  });
+
+  let rendered = false;
+  for (let i = 0; i < 25; i++) {
+    await new Promise((r) => setTimeout(r, 400));
+    try {
+      const res = await fetch(`http://127.0.0.1:${port}/crm`);
+      if (res.ok) {
+        const html = await res.text();
+        fs.writeFileSync(path.join(crmDir, 'index.html'), html, 'utf8');
+        console.log('✅ Generated public_html/crm/index.html (' + html.length + ' bytes)');
+        rendered = true;
+        break;
+      }
+    } catch {}
+  }
+  child.kill();
+  if (!rendered) {
+    console.warn('⚠️ Could not pre-render /crm/index.html from SSR server.');
+  }
 }
 
 // 3. Create .htaccess in public_html

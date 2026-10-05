@@ -1,1 +1,0 @@
-import{j as o,x as t}from"./index-n0dAWCbN.js";function n({children:r,className:a,hover:s=!1}){return o.jsx("div",{className:t("glass-card rounded-2xl",s&&"transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/40",a),children:r})}export{n as G};
