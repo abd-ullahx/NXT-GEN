@@ -1,7 +1,7 @@
 <?php
 
-use IlluminateFoundationApplication;
-use IlluminateHttpRequest;
+use Illuminate\Foundation\Application;
+use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
@@ -55,6 +55,4 @@ require $backendPath . '/vendor/autoload.php';
 $app = require_once $backendPath . '/bootstrap/app.php';
 
 // Handle request
-$request = Request::capture();
-$response = $app->handleRequest($request);
-$response->send();
+$app->handleRequest(Request::capture());

@@ -188,8 +188,8 @@ console.log('✅ Created public_html/crm/.htaccess');
 // 5. Create index.php in public_html for Laravel
 const indexPhp = `<?php
 
-use Illuminate\Foundation\Application;
-use Illuminate\Http\Request;
+use Illuminate\\Foundation\\Application;
+use Illuminate\\Http\\Request;
 
 define('LARAVEL_START', microtime(true));
 
@@ -243,9 +243,7 @@ require $backendPath . '/vendor/autoload.php';
 $app = require_once $backendPath . '/bootstrap/app.php';
 
 // Handle request
-$request = Request::capture();
-$response = $app->handleRequest($request);
-$response->send();
+$app->handleRequest(Request::capture());
 `;
 
 fs.writeFileSync(path.join(publicHtmlDir, 'index.php'), indexPhp, 'utf8');
